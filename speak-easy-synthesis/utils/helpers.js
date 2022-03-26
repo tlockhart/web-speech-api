@@ -1,7 +1,11 @@
 const setVoiceOptions = (voices, voiceSelect, utterThis) => {
-  var selectedOption = voiceSelect.selectedOptions[0].getAttribute("data-name");
+  var selectedOption = voiceSelect.selectedOptions[0].getAttribute('data-name');
+  
+  console.log("InSETVOICEOPTIONS, voice:", voices.length);
   for (let i = 0; i < voices.length; i++) {
+    console.log("Voice:", voices[i].name);
     if (voices[i].name === selectedOption) {
+
       utterThis.voice = voices[i];
       break;
     }
@@ -49,6 +53,9 @@ const speak = (synth, utterThis) => {
     console.error("speechSynthesis.speaking");
     return;
   }
+  ///IMPORTANT
+  // selectedOptions(voices, voiceSelect, utterThis);
+
   // Start Speaking
   synth.speak(utterThis);
 
@@ -60,7 +67,60 @@ const speak = (synth, utterThis) => {
   utterThis.onerror = function (event) {
     console.error("SpeechSynthesisUtterance.onerror");
   };
+  
 }; // speak
+
+function onboundaryHandler(event){
+  var textarea = document.getElementsByClassName('txt')[0];
+  // console.log("TEXTAREA:", textarea);
+  var value = textarea.value;
+  var index = event.charIndex;
+  var word = getWordAt(value, index);
+  var anchorPosition = getWordStart(value, index);
+  var activePosition = anchorPosition + word.length;
+  
+  textarea.focus();
+  
+  if (textarea.setSelectionRange) {
+     textarea.setSelectionRange(anchorPosition, activePosition);
+  }
+  else {
+     var range = textarea.createTextRange();
+     range.collapse(true);
+     range.moveEnd('character', activePosition);
+     range.moveStart('character', anchorPosition);
+     range.select();
+  }
+}
+
+// Get the word of a string given the string and index
+function getWordAt(str, pos) {
+  // Perform type conversions.
+  str = String(str);
+  pos = Number(pos) >>> 0;
+
+  // Search for the word's beginning and end.
+  var left = str.slice(0, pos + 1).search(/\S+$/),
+      right = str.slice(pos).search(/\s/);
+
+  // The last word in the string is a special case.
+  if (right < 0) {
+      return str.slice(left);
+  }
+  
+  // Return the word, using the located bounds to extract it from the string.
+  return str.slice(left, right + pos);
+}
+
+// Get the position of the beginning of the word
+function getWordStart(str, pos) {
+  str = String(str);
+  pos = Number(pos) >>> 0;
+
+  // Search for the word's beginning
+  var start = str.slice(0, pos + 1).search(/\S+$/);
+  return start;
+}
 
 export const activateListeners = (
   synth,
@@ -83,17 +143,19 @@ export const activateListeners = (
 
   playBtn.onclick = (event) => {
     event.preventDefault();
-    /************* */
     setVoiceOptions(voices, voiceSelect, utterThis);
     utterThis.text = inputTxt.value;
+    /**************/
+    //old part
+    // // Start speaking the utterance
+    // speak(synth, utterThis);
 
-    // Start speaking the utterance
-    speak(synth, utterThis);
-
-    // Remove the focus from the text area, focus gives focus to textarea
-    // inputTxt.blur();
+    // // Remove the focus from the text area, focus gives focus to textarea
+    // // inputTxt.blur();
     /*************/
-    // utterThis.onboundary = onboundaryHandler;
+    // new part
+    utterThis.onboundary = onboundaryHandler;
+    synth.speak(utterThis);
   };
 
   pauseBtn.onclick = (event) => {
@@ -126,19 +188,26 @@ export const activateListeners = (
     rateValue.textContent = rate.value;
   };
 
-  voiceSelect.onchange = function () {
+  voiceSelect.onchange = function (event) {
+
+    // NOTE: setInitial voice, must recall, when new voice selected.
+    setVoiceOptions(voices, voiceSelect, utterThis);
+
     speak(synth, utterThis);
   };
 };
 
-export const populateVoiceList = (synth, voices, voiceSelect) => {
-  voices = synth.getVoices().sort(function (a, b) {
+//populate options and set selected to first option
+export const populateVoiceList = async(synth, voices, voiceSelect, utterThis) => {
+  voices = await synth.getVoices().sort(function (a, b) {
     const aname = a.name.toUpperCase(),
       bname = b.name.toUpperCase();
     if (aname < bname) return -1;
     else if (aname == bname) return 0;
     else return +1;
   });
+  console.log("popVList voice:", voices.length);
+  // console.log("popVList selectedIndex:", voiceSelect.selectedIndex);
   var selectedIndex =
     voiceSelect.selectedIndex < 0 ? 0 : voiceSelect.selectedIndex;
   voiceSelect.innerHTML = "";
@@ -153,6 +222,16 @@ export const populateVoiceList = (synth, voices, voiceSelect) => {
     option.setAttribute("data-lang", voices[i].lang);
     option.setAttribute("data-name", voices[i].name);
     voiceSelect.appendChild(option);
-  }
+
+    
+  }// for
+  console.log("popVlist selectedIndex:", selectedIndex);
+
+  // voiceSelect is default index 0
   voiceSelect.selectedIndex = selectedIndex;
+  console.log("popVList VOICESELECT:", voiceSelect.selectedIndex);
+
+  // NOTE: setInitial voice, must recall, when new voice selected.
+  setVoiceOptions(voices, voiceSelect, utterThis);
+  return voices;
 }; // populate voice list

@@ -15,22 +15,23 @@ var voiceSelect = document.querySelector("select");
 // Voice List
 var voices = [];
 
-// Create Utterance:
+// Step1: Create Utterance:
 var utterThis = new SpeechSynthesisUtterance();
 let synth;
+
 const retrieveSynth = async () => {
+  // Step 2: Create SpeechSynthesis
   synth = await setSpeech();
   console.log("Voices", synth);
   // helper
 
-  // populate voiceOptions
-  populateVoiceList(synth, voices, voiceSelect);
+  // Step3: Return the list of voices from populateVoiceOptions
+  voices = await populateVoiceList(synth, voices, voiceSelect, utterThis);
 
-  if (speechSynthesis.onvoiceschanged !== undefined) {
-    speechSynthesis.onvoiceschanged = populateVoiceList;
-  }
+  console.log("retSynth: voices:", voices.length);
 
-  // Start Listeners
+
+  // Step4: Activate Listeners
   activateListeners(synth, voices, voiceSelect, utterThis, inputTxt);
 };
 
