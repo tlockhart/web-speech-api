@@ -19,7 +19,7 @@ h1, p {
 }
 
 /* .txt,  */
-.txt, select, form > div {
+#txt, select, form > div {
   margin: 0 auto;
   display: block;
   font-family: sans-serif;
@@ -41,7 +41,7 @@ form > div {
 
 /* .txt,  */
 
-.txt, form > div {
+#txt, form > div {
   margin-bottom: 10px;
   overflow: auto;
 }
@@ -75,3 +75,26 @@ label {
 .controls button {
   padding: 10px;
 }
+
+.checkbox-inline{
+  margin-left: 71px;
+  margin-bottom: 10px;
+  /* width: auto; */
+}
+
+.top-mg-10 {
+  margin-top: 10px;
+}
+.rt-pd-10 {
+  margin-right: 10px;
+}
+
+/* #txt {
+  width: 680px;
+  height: 306px;
+  margin: 10px 45.5px;
+
+  margin-top: 0;
+  padding: 5px;
+  border: 1px solid #ccc;
+} */

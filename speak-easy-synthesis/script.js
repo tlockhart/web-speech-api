@@ -7,8 +7,9 @@ import {
 
 // inputs:
 var inputForm = document.querySelector("form");
-var inputTxt = document.querySelector(".txt");
-inputTxt.value = inputText;
+let inputTxt = document.querySelector("#txt");
+// const inputText
+// inputTxt.textContent = inputText;
 
 var voiceSelect = document.querySelector("select");
 

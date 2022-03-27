@@ -1,17 +1,16 @@
-const setVoiceOptions = (voices, voiceSelect, utterThis) => {
-  var selectedOption = voiceSelect.selectedOptions[0].getAttribute('data-name');
-  
-  console.log("InSETVOICEOPTIONS, voice:", voices.length);
-  for (let i = 0; i < voices.length; i++) {
-    console.log("Voice:", voices[i].name);
-    if (voices[i].name === selectedOption) {
+const DEFAULT_VOICE = 19;
 
+const setVoiceOptions = (voices, voiceSelect, utterThis) => {
+  var selectedOption = voiceSelect.selectedOptions[0].getAttribute("data-name");
+
+  for (let i = 0; i < voices.length; i++) {
+    if (voices[i].name === selectedOption) {
       utterThis.voice = voices[i];
       break;
     }
-  }
-  utterThis.pitch = pitch.value;
+  } // for
   utterThis.rate = rate.value;
+  utterThis.pitch = pitch.value;
 }; // setVoiceOptions
 
 //   export
@@ -22,13 +21,13 @@ The market for labor is of particular importance in the economy because it affec
 are directly influenced by the labor market when you are looking for a job or are employed and
 earning money. In this chapter, instead of firms acting as suppliers, as we have viewed them so
 far, firms are the buyers (demanders) of labor. And individuals, like you, are the suppliers of
-labor. 
-  
+labor.
+
 The market for labor, then, is composed of suppliers (workers) and demanders (firms). Workers
 produce goods and services and therefore are known as factors of production—a term we’ve met
 before in Chapter 6. Remember that a factor of production is used in the production of other
-goods. 
-  
+goods.
+
 Markets for factors of production are somewhat different from markets for goods and services
 that we consume because the demand for factors of production is derived from the demand for
 final goods and services. A firm first makes the decision to produce a good or service and then
@@ -61,64 +60,112 @@ const speak = (synth, utterThis) => {
 
   // End is fired when utterance is finished being spoken
   utterThis.onend = function (event) {
-    console.log("SpeechSynthesisUtterance.onend");
+    console.log("SpeechSynthesisUtterance.onend", event);
   };
   // Error Event is fired when an err occurs that prevents the utterance from being spoken
   utterThis.onerror = function (event) {
     console.error("SpeechSynthesisUtterance.onerror");
   };
-  
 }; // speak
 
-function onboundaryHandler(event){
-  var textarea = document.getElementsByClassName('txt')[0];
-  // console.log("TEXTAREA:", textarea);
-  var value = textarea.value;
-  var index = event.charIndex;
-  var word = getWordAt(value, index);
-  var anchorPosition = getWordStart(value, index);
-  var activePosition = anchorPosition + word.length;
-  
-  textarea.focus();
-  
-  if (textarea.setSelectionRange) {
-     textarea.setSelectionRange(anchorPosition, activePosition);
-  }
-  else {
-     var range = textarea.createTextRange();
-     range.collapse(true);
-     range.moveEnd('character', activePosition);
-     range.moveStart('character', anchorPosition);
-     range.select();
-  }
-}
+function onboundaryHandler(event, type) {
+  console.log("TYPE:", type);
+  if (type === "word") {
+    // Get Text element
+    var textarea = document.getElementById("txt");
+    console.log("TEXTAREA:", textarea);
+    // Get the entire text
+    // const text = textarea.textContent;
+    var value = textarea.value;
+    // console.log("TEXT:", text);
+    // Get index of the first char that triggered the
+    // utterance event
+    var index = event.charIndex;
+    console.log("INDEX:", index);
+    // Get the entire word
+    var word = getWordAt(value, index);
+    var anchorPosition = getWordStart(value, index);
+    var activePosition = anchorPosition + word.length;
+
+    console.log(
+      "activeposition:",
+      activePosition,
+      ";anchorPosition:",
+      anchorPosition
+    );
+    textarea.focus();
+    // if there is no current selected range
+    if (textarea.setSelectionRange) {
+      textarea.setSelectionRange(anchorPosition, activePosition);
+    } else {
+      // OLD CONTENT
+      var range = textarea.createTextRange();
+      range.collapse(true);
+      range.moveEnd("character", activePosition);
+      range.moveStart("character", anchorPosition);
+      range.select();
+    }
+  } //if
+} //onBoundary
 
 // Get the word of a string given the string and index
 function getWordAt(str, pos) {
+  let isSameSentence = true;
   // Perform type conversions.
-  str = String(str);
+  // str = String(str);
   pos = Number(pos) >>> 0;
+  // console.log("GEtWOrdAt STR:", str, "; pos:", pos);
 
-  // Search for the word's beginning and end.
-  var left = str.slice(0, pos + 1).search(/\S+$/),
-      right = str.slice(pos).search(/\s/);
+  /***********************************************
+   * match on a non-whitespace letter
+   * Search for the word's beginning index. loop
+   * through the starting index of each word
+   * and return the index of all non-whitespace char
+   ***********************************************/
+  console.log("Accumulator:", str.slice(0, pos + 1));
+  var sentence = str.slice();
+  var left = str.slice(0, pos + 1).search(/\S+$/);
+  console.log("LEFT-INDEX:", left);
+  /***********************************************
+   * match on a whitespace letter
+   * Search for the word's ending index. loop
+   * through the index of each word
+   * and return the index of whitespace char
+   * as end index
+   ***********************************************/
+  var right = str.slice(pos).search(/\s/);
 
+  console.log("RIGHT-INDEX:", right);
   // The last word in the string is a special case.
   if (right < 0) {
-      return str.slice(left);
+    return str.slice(left);
   }
-  
-  // Return the word, using the located bounds to extract it from the string.
-  return str.slice(left, right + pos);
+
+  /**********************************************
+   * Return the word, using the located bounds to
+   * extract it from the string.
+   **********************************************/
+  let word = str.slice(left, right + pos);
+  console.log("WORD:", word);
+  return word;
 }
 
 // Get the position of the beginning of the word
 function getWordStart(str, pos) {
   str = String(str);
+  console.log("Pos1:", pos);
   pos = Number(pos) >>> 0;
+  console.log("Pos2:", pos);
 
-  // Search for the word's beginning
+  /***********************************************
+   * From the whole text str, slice the first
+   * letter and increment by one, search loops
+   * thru text, until a non-whitespace character
+   * is found, and returns the char index of the
+   * start of the word,
+   ************************************************/
   var start = str.slice(0, pos + 1).search(/\S+$/);
+  console.log("Start:", start);
   return start;
 }
 
@@ -141,6 +188,29 @@ export const activateListeners = (
   const resumeBtn = document.getElementById("resume");
   const stopBtn = document.getElementById("stop");
 
+  // Checkboxes:
+  var checkboxes = document.querySelectorAll(
+    "input[type=checkbox][name=settings]"
+  );
+  let enabledSettings = [];
+
+  /*
+For IE11 support, replace arrow functions with normal functions and
+use a polyfill for Array.forEach:
+https://vanillajstoolkit.com/polyfills/arrayforeach/
+*/
+
+  // Use Array.forEach to add an event listener to each checkbox.
+  checkboxes.forEach(function (checkbox) {
+    checkbox.addEventListener("change", function () {
+      enabledSettings = Array.from(checkboxes) // Convert checkboxes to an array to use filter and map.
+        .filter((i) => i.checked) // Use Array.filter to remove unchecked checkboxes.
+        .map((i) => i.value); // Use Array.map to extract only the checkbox values from the array of objects.
+
+      console.log(enabledSettings);
+    });
+  });
+
   playBtn.onclick = (event) => {
     event.preventDefault();
     setVoiceOptions(voices, voiceSelect, utterThis);
@@ -154,8 +224,32 @@ export const activateListeners = (
     // // inputTxt.blur();
     /*************/
     // new part
-    utterThis.onboundary = onboundaryHandler;
-    synth.speak(utterThis);
+    // onboundary event fired when the spoken utterance reaches a word or sentence boundary
+
+    console.log("Settings inclue word:", enabledSettings.includes("word"));
+    console.log(
+      "Settings inclue sentence:",
+      enabledSettings.includes("sentence")
+    );
+    console.log("Settings inclue line:", enabledSettings.includes("line"));
+    switch (true) {
+      case enabledSettings.includes("sentence"):
+        console.log("In sentence case");
+        // ired when the spoken utterance reaches
+        // a word or sentence boundary
+        utterThis.onboundary = (event) => onboundaryHandler(event, "sentence");
+        synth.speak(utterThis);
+        break;
+      case enabledSettings.includes("line"):
+        utterThis.onboundary = (event) => onboundaryHandler(event, "line");
+        // synth.speak(utterThis);
+        break;
+      case enabledSettings.includes("word"):
+        utterThis.onboundary = (event) => onboundaryHandler(event, "word");
+        synth.speak(utterThis);
+        break;
+      default:
+    }
   };
 
   pauseBtn.onclick = (event) => {
@@ -181,15 +275,18 @@ export const activateListeners = (
   };
 
   pitch.onchange = function () {
+    utterThis.pitch = pitch.value;
     pitchValue.textContent = pitch.value;
   };
 
   rate.onchange = function () {
+    // rateValue = document.querySelector(".rate-value");
+    console.log("RateValue:", rate.value);
+    utterThis.rate = rate.value;
     rateValue.textContent = rate.value;
   };
 
   voiceSelect.onchange = function (event) {
-
     // NOTE: setInitial voice, must recall, when new voice selected.
     setVoiceOptions(voices, voiceSelect, utterThis);
 
@@ -198,7 +295,12 @@ export const activateListeners = (
 };
 
 //populate options and set selected to first option
-export const populateVoiceList = async(synth, voices, voiceSelect, utterThis) => {
+export const populateVoiceList = async (
+  synth,
+  voices,
+  voiceSelect,
+  utterThis
+) => {
   voices = await synth.getVoices().sort(function (a, b) {
     const aname = a.name.toUpperCase(),
       bname = b.name.toUpperCase();
@@ -209,7 +311,7 @@ export const populateVoiceList = async(synth, voices, voiceSelect, utterThis) =>
   console.log("popVList voice:", voices.length);
   // console.log("popVList selectedIndex:", voiceSelect.selectedIndex);
   var selectedIndex =
-    voiceSelect.selectedIndex < 0 ? 0 : voiceSelect.selectedIndex;
+    voiceSelect.selectedIndex < 0 ? DEFAULT_VOICE : voiceSelect.selectedIndex;
   voiceSelect.innerHTML = "";
   for (let i = 0; i < voices.length; i++) {
     var option = document.createElement("option");
@@ -222,9 +324,7 @@ export const populateVoiceList = async(synth, voices, voiceSelect, utterThis) =>
     option.setAttribute("data-lang", voices[i].lang);
     option.setAttribute("data-name", voices[i].name);
     voiceSelect.appendChild(option);
-
-    
-  }// for
+  } // for
   console.log("popVlist selectedIndex:", selectedIndex);
 
   // voiceSelect is default index 0
