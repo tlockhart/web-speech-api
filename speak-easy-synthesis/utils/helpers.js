@@ -69,6 +69,7 @@ const speak = (synth, utterThis) => {
 }; // speak
 
 function onboundaryHandler(event, type) {
+  console.log("Event.Target", event.target.text);
   console.log("TYPE:", type);
   if (type === "word") {
     // Get Text element
