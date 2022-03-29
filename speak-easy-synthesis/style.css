@@ -20,14 +20,14 @@ h1, p {
 
 /* .txt,  */
 #textarea, select, form > div {
-  /* margin: 0 auto; */
+  margin: 0 auto;
   display: block;
   font-family: sans-serif;
   font-size: 16px;
   padding: 5px;
 }
 
-/* .txt {
+/* .textarea {
   width: 80%;
 } */
 
@@ -36,7 +36,7 @@ select {
 }
 
 form > div {
-  /* width: 81%; */
+  width: 81%;
 }
 
 /* .txt,  */
@@ -98,3 +98,6 @@ label {
   padding: 5px;
   border: 1px solid #ccc;
 } */
+#sentence {
+  width: 100px;
+}

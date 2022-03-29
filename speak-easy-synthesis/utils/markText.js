@@ -70,11 +70,11 @@ export const highlightSentence = (startIdx, endIdx) => {
 
 export const clearSelection = (textarea) => {
   let range = new Range();
-  range.selectNodeContents(textarea); // or selectNode(p) to select the <p> tag too
+  // range.selectNodeContents(textarea); // or selectNode(p) to select the <p> tag too
 
-  document.getSelection().removeAllRanges(); // clear existing selection if any
-  document.getSelection().addRange(range);
-  textarea.focus();
+  // document.getSelection().removeAllRanges(); // clear existing selection if any
+  // document.getSelection().addRange(range);
+  // textarea.focus();
   // let s = textarea.getSelection();
   // console.log("-----textarea:", s);
   // if (s.rangeCount > 1) {
@@ -82,4 +82,11 @@ export const clearSelection = (textarea) => {
   //   s.removeRange(s.getRangeAt(i));
   //  }
   // }
+  console.log("*******IN CLEAR RANGE");
+  let s = window.getSelection();
+  if(s.rangeCount > 1) {
+   for(var i = 1; i < s.rangeCount; i++) {
+    s.removeRange(s.getRangeAt(i));
+   }
+  }
 }

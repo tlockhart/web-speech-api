@@ -252,7 +252,7 @@ function onboundaryHandler(event, type) {
       textarea.setSelectionRange(anchorPosition, activePosition);
     } else {
       // OLD CONTENT
-      document.getSelection().removeAllRanges()
+      
       let range = textarea.createTextRange();
       range.collapse(true);
       range.moveEnd("character", activePosition);

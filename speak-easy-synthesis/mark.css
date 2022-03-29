@@ -5,6 +5,12 @@
 *::after {
   box-sizing: border-box;
 }
+.parent-container {
+  margin: 0 auto;
+}
+.checkbox-container {
+  margin-left: 71px;
+}
 container {
   overflow: none;
 }
@@ -18,7 +24,8 @@ textarea {
   position: relative;
   overflow: none;
   width: 695px;
-  height: 506px;
+  /* height: 506px; */
+  height:356px;
   /* scroll-behavior: none!important; */
 }
 
