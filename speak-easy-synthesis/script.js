@@ -7,7 +7,7 @@ import {
 
 // inputs:
 var inputForm = document.querySelector("form");
-let inputTxt = document.querySelector("#txt");
+let inputTxt = document.querySelector("#textarea");
 // const inputText
 // inputTxt.textContent = inputText;
 
@@ -23,14 +23,9 @@ let synth;
 const retrieveSynth = async () => {
   // Step 2: Create SpeechSynthesis
   synth = await setSpeech();
-  console.log("Voices", synth);
-  // helper
 
   // Step3: Return the list of voices from populateVoiceOptions
   voices = await populateVoiceList(synth, voices, voiceSelect, utterThis);
-
-  console.log("retSynth: voices:", voices.length);
-
 
   // Step4: Activate Listeners
   activateListeners(synth, voices, voiceSelect, utterThis, inputTxt);

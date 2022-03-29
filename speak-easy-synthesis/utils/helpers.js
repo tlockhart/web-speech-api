@@ -1,7 +1,165 @@
-const DEFAULT_VOICE = 19;
+import { clearSelection, highlightSentence, removeSentenceHighlights } from "./markText.js";
 
+/*************************
+ * Defaults:
+*************************/
+// const DEFAULT_VOICE = 19; // for windows
+const DEFAULT_VOICE = 0; // for mac
+// sliders:
+const pitch = document.querySelector("#pitch");
+const pitchValue = document.querySelector(".pitch-value");
+const rate = document.querySelector("#rate");
+const rateValue = document.querySelector(".rate-value");
+
+// buttons:
+const playBtn = document.getElementById("play");
+const pauseBtn = document.getElementById("pause");
+const resumeBtn = document.getElementById("resume");
+const stopBtn = document.getElementById("stop");
+
+// Checkboxes:
+const checkboxes = document.querySelectorAll(
+  "input[type=checkbox][name=settings]"
+);
+let enabledSettings = [];
+
+const states = {
+  START: "start",
+  MIDDLE: "middle",
+  // END: 'end'
+};
+let textarea = document.getElementById("textarea");
+
+let sentenceCt = 0;
+let startPosition = 0;
+let endPositions = [];
+let startPositions = [];
+let state = states.START;
+
+/***********************************************
+ * RESETDEFAULTS: Perform Page Reset without Refresh
+ ***********************************************/
+const resetDefaults = () => {
+sentenceCt = 0;
+startPosition = 0;
+
+endPositions = [];
+startPositions = [];
+
+state = states.START;
+textarea = document.getElementById("textarea")
+removeSentenceHighlights();
+// remove word selection
+clearSelection(textarea);
+}
+/***********************************************/
+
+const isNewSentence = (startIdx, endIdxArray, sentenceCt) => {
+  if (state === states.START && (sentenceCt === 0 || (sentenceCt > 0 && startIdx > endIdxArray[sentenceCt -1]))) {
+    console.log("****ISNEWSENTENCE");
+    return true;
+  }
+  return false;
+};
+
+const isEndOfSentence = (endIdx, endIdxArray, sentenceCt) => {
+  if (endIdxArray[sentenceCt - 1] === endIdx ) {
+    // console.log("****END OF SENTENCE")
+    // console.log("sentenceCt:", sentenceCt, "; endIdxArray[sentenceCt - 1]:", endIdxArray[sentenceCt - 1], "; endIdx:", endIdx);
+   return true;
+  }
+  return false;
+}
+
+const isEndOfParagraph = (currentIdx, endIdx, endIdxArray, sentenceCt, text) => {
+  // console.log("PARAGRAPH:", "sentenceCt:", sentenceCt, "; currentIdx:", currentIdx, "; endIdxArray[sentenceCt - 1]:", endIdxArray[sentenceCt - 1], "; endIdx:", endIdx, "; LENGTH:", endIdxArray.length, "; state:", state);
+//  if(sentenceCt > 2){
+// console.log("-------SENTENCE:", text.substring(endIdxArray[sentenceCt-2], endIdxArray[sentenceCt-1]+1));
+//  console.log("endIdxArray[sentenceCt - 1] === endIdx:", endIdxArray[sentenceCt - 1] === endIdx);
+//  console.log("sentenceCt === endIdxArray.length-1:", sentenceCt === endIdxArray.length-1);
+//  }
+ if(sentenceCt > 2 && endIdxArray[sentenceCt - 1] === endIdx && sentenceCt === endIdxArray.length-1 ) {
+    return true;
+  }
+  return false;
+}
+
+function getMatchIndices(regex, str) {
+  let  result = [];
+  let match;
+  regex = new RegExp(regex);
+  while ((match = regex.exec(str)))
+    // Add 1 for space offset
+    result.push(match.index + 1);
+  return result;
+}
+function newSentenceCheck(startingOffset, endingOffset, word, text) {
+  // At First Sentence
+  if (sentenceCt === 0) {
+    console.log("TEXT:", text);
+    // Find sentences ending in punctuation and space
+    let regex = /([.!?])+\s/g;
+    endPositions = getMatchIndices(regex, text);
+
+    // Get last sentence end position, which contains no space
+    // const lastSentenceEndIndex = text.length-1;
+    //Push index on endPositions array
+    endPositions.push(text.length);
+    console.log("END_SENTENCE_POSITIONS:", endPositions);
+  }
+
+  // At start of New Sentence
+  if (isNewSentence(startingOffset, endPositions, sentenceCt)) {
+    sentenceCt += 1;
+    // isNewSentence = false;
+    startPosition = startingOffset;
+    startPositions.push(startPosition);
+
+    /***********************
+     * Highlight the first Sentence:
+     ************************/
+    console.log(
+      `StartIndex: ${startPositions[sentenceCt - 1]}; endPositions: ${
+        endPositions[sentenceCt - 1]
+      }}`
+    );
+
+      highlightSentence(
+        startPositions[sentenceCt - 1],
+        endPositions[sentenceCt - 1]
+      );
+  
+
+    console.log("SENTENCE_COUNT:", sentenceCt);
+    state = states.MIDDLE;
+    /***********************/
+  } // first sentence
+
+  console.log(
+    `Count: ${sentenceCt}; endPosition: ${
+      endPositions[sentenceCt - 1]
+    }; endingOffset: ${endingOffset}`
+  );
+  console.log(
+    `SentenceEndIndex: ${
+      endPositions[sentenceCt - 1]
+    }; EndingOffset: ${endingOffset}`
+  );
+
+  if (isEndOfSentence(endingOffset, endPositions, sentenceCt)) {
+    console.log("SENTENCE_COUNT:", sentenceCt);
+    state = states.START;
+    startPosition = 0;
+  }
+
+  if (isEndOfParagraph(startingOffset, endingOffset, endPositions, sentenceCt, text)) {
+    return true;
+  }
+  return false;
+}
+/*********************/
 const setVoiceOptions = (voices, voiceSelect, utterThis) => {
-  var selectedOption = voiceSelect.selectedOptions[0].getAttribute("data-name");
+  let selectedOption = voiceSelect.selectedOptions[0].getAttribute("data-name");
 
   for (let i = 0; i < voices.length; i++) {
     if (voices[i].name === selectedOption) {
@@ -12,8 +170,6 @@ const setVoiceOptions = (voices, voiceSelect, utterThis) => {
   utterThis.rate = rate.value;
   utterThis.pitch = pitch.value;
 }; // setVoiceOptions
-
-//   export
 
 export const inputText = `11.1 The Competitive Labor Market
 
@@ -52,15 +208,13 @@ const speak = (synth, utterThis) => {
     console.error("speechSynthesis.speaking");
     return;
   }
-  ///IMPORTANT
-  // selectedOptions(voices, voiceSelect, utterThis);
 
   // Start Speaking
   synth.speak(utterThis);
 
   // End is fired when utterance is finished being spoken
   utterThis.onend = function (event) {
-    console.log("SpeechSynthesisUtterance.onend", event);
+    // console.log("SpeechSynthesisUtterance.onend", event);
   };
   // Error Event is fired when an err occurs that prevents the utterance from being spoken
   utterThis.onerror = function (event) {
@@ -69,53 +223,52 @@ const speak = (synth, utterThis) => {
 }; // speak
 
 function onboundaryHandler(event, type) {
-  console.log("Event.Target", event.target.text);
-  console.log("TYPE:", type);
-  if (type === "word") {
-    // Get Text element
-    var textarea = document.getElementById("txt");
-    console.log("TEXTAREA:", textarea);
-    // Get the entire text
-    // const text = textarea.textContent;
-    var value = textarea.value;
-    // console.log("TEXT:", text);
+
+  // Get the entire text
+    let value = textarea.value;
+
     // Get index of the first char that triggered the
     // utterance event
-    var index = event.charIndex;
-    console.log("INDEX:", index);
-    // Get the entire word
-    var word = getWordAt(value, index);
-    var anchorPosition = getWordStart(value, index);
-    var activePosition = anchorPosition + word.length;
+    let index = event.charIndex;
 
-    console.log(
-      "activeposition:",
-      activePosition,
-      ";anchorPosition:",
-      anchorPosition
-    );
+    // Get the entire word
+    let word = getWordAt(value, index);
+    let anchorPosition = getWordStart(value, index);
+    let activePosition = anchorPosition + word.length;
+
+    if (type === "sentence")
+    {
+      // If new Sentence then set anchorPosition
+    let endOfParagraph = newSentenceCheck(anchorPosition, activePosition, word, value);
+    console.log("&&&&&&&EndofPage:", endOfParagraph);
+    if (endOfParagraph) {
+      resetDefaults();    
+    }
+  }
+
     textarea.focus();
     // if there is no current selected range
     if (textarea.setSelectionRange) {
       textarea.setSelectionRange(anchorPosition, activePosition);
     } else {
       // OLD CONTENT
-      var range = textarea.createTextRange();
+      document.getSelection().removeAllRanges()
+      let range = textarea.createTextRange();
       range.collapse(true);
       range.moveEnd("character", activePosition);
       range.moveStart("character", anchorPosition);
       range.select();
     }
-  } //if
+  // } //if
 } //onBoundary
 
 // Get the word of a string given the string and index
 function getWordAt(str, pos) {
   let isSameSentence = true;
   // Perform type conversions.
-  // str = String(str);
+  str = String(str);
   pos = Number(pos) >>> 0;
-  // console.log("GEtWOrdAt STR:", str, "; pos:", pos);
+
 
   /***********************************************
    * match on a non-whitespace letter
@@ -123,10 +276,8 @@ function getWordAt(str, pos) {
    * through the starting index of each word
    * and return the index of all non-whitespace char
    ***********************************************/
-  console.log("Accumulator:", str.slice(0, pos + 1));
-  var sentence = str.slice();
-  var left = str.slice(0, pos + 1).search(/\S+$/);
-  console.log("LEFT-INDEX:", left);
+  let left = str.slice(0, pos + 1).search(/\S+$/);
+  // console.log("LEFT-INDEX:", left);
   /***********************************************
    * match on a whitespace letter
    * Search for the word's ending index. loop
@@ -134,9 +285,9 @@ function getWordAt(str, pos) {
    * and return the index of whitespace char
    * as end index
    ***********************************************/
-  var right = str.slice(pos).search(/\s/);
+  let right = str.slice(pos).search(/\s/);
 
-  console.log("RIGHT-INDEX:", right);
+  // console.log("RIGHT-INDEX:", right);
   // The last word in the string is a special case.
   if (right < 0) {
     return str.slice(left);
@@ -154,9 +305,9 @@ function getWordAt(str, pos) {
 // Get the position of the beginning of the word
 function getWordStart(str, pos) {
   str = String(str);
-  console.log("Pos1:", pos);
+  // console.log("Pos1:", pos);
   pos = Number(pos) >>> 0;
-  console.log("Pos2:", pos);
+  // console.log("Pos2:", pos);
 
   /***********************************************
    * From the whole text str, slice the first
@@ -165,8 +316,8 @@ function getWordStart(str, pos) {
    * is found, and returns the char index of the
    * start of the word,
    ************************************************/
-  var start = str.slice(0, pos + 1).search(/\S+$/);
-  console.log("Start:", start);
+  let start = str.slice(0, pos + 1).search(/\S+$/);
+  // console.log("Start:", start);
   return start;
 }
 
@@ -177,23 +328,7 @@ export const activateListeners = (
   utterThis,
   inputTxt
 ) => {
-  // sliders:
-  var pitch = document.querySelector("#pitch");
-  var pitchValue = document.querySelector(".pitch-value");
-  var rate = document.querySelector("#rate");
-  var rateValue = document.querySelector(".rate-value");
-
-  // buttons:
-  const playBtn = document.getElementById("play");
-  const pauseBtn = document.getElementById("pause");
-  const resumeBtn = document.getElementById("resume");
-  const stopBtn = document.getElementById("stop");
-
-  // Checkboxes:
-  var checkboxes = document.querySelectorAll(
-    "input[type=checkbox][name=settings]"
-  );
-  let enabledSettings = [];
+  
 
   /*
 For IE11 support, replace arrow functions with normal functions and
@@ -208,36 +343,24 @@ https://vanillajstoolkit.com/polyfills/arrayforeach/
         .filter((i) => i.checked) // Use Array.filter to remove unchecked checkboxes.
         .map((i) => i.value); // Use Array.map to extract only the checkbox values from the array of objects.
 
-      console.log(enabledSettings);
+      // console.log(enabledSettings);
     });
   });
 
   playBtn.onclick = (event) => {
     event.preventDefault();
+    
+    resetDefaults();
     setVoiceOptions(voices, voiceSelect, utterThis);
     utterThis.text = inputTxt.value;
-    /**************/
-    //old part
-    // // Start speaking the utterance
-    // speak(synth, utterThis);
-
-    // // Remove the focus from the text area, focus gives focus to textarea
-    // // inputTxt.blur();
-    /*************/
-    // new part
-    // onboundary event fired when the spoken utterance reaches a word or sentence boundary
-
-    console.log("Settings inclue word:", enabledSettings.includes("word"));
-    console.log(
-      "Settings inclue sentence:",
-      enabledSettings.includes("sentence")
-    );
-    console.log("Settings inclue line:", enabledSettings.includes("line"));
+    
     switch (true) {
       case enabledSettings.includes("sentence"):
-        console.log("In sentence case");
-        // ired when the spoken utterance reaches
-        // a word or sentence boundary
+        // console.log("In sentence case");
+        /**********************************
+         * Fired when the spoken utterance reaches
+         * a word or sentence boundary
+         * ********************************/
         utterThis.onboundary = (event) => onboundaryHandler(event, "sentence");
         synth.speak(utterThis);
         break;
@@ -273,6 +396,8 @@ https://vanillajstoolkit.com/polyfills/arrayforeach/
     if (speechSynthesis) {
       speechSynthesis.cancel();
     }
+    
+    resetDefaults();
   };
 
   pitch.onchange = function () {
@@ -282,7 +407,7 @@ https://vanillajstoolkit.com/polyfills/arrayforeach/
 
   rate.onchange = function () {
     // rateValue = document.querySelector(".rate-value");
-    console.log("RateValue:", rate.value);
+    // console.log("RateValue:", rate.value);
     utterThis.rate = rate.value;
     rateValue.textContent = rate.value;
   };
@@ -309,13 +434,12 @@ export const populateVoiceList = async (
     else if (aname == bname) return 0;
     else return +1;
   });
-  console.log("popVList voice:", voices.length);
-  // console.log("popVList selectedIndex:", voiceSelect.selectedIndex);
-  var selectedIndex =
+
+  let selectedIndex =
     voiceSelect.selectedIndex < 0 ? DEFAULT_VOICE : voiceSelect.selectedIndex;
   voiceSelect.innerHTML = "";
   for (let i = 0; i < voices.length; i++) {
-    var option = document.createElement("option");
+    let option = document.createElement("option");
     option.textContent = voices[i].name + " (" + voices[i].lang + ")";
 
     if (voices[i].default) {
@@ -326,11 +450,9 @@ export const populateVoiceList = async (
     option.setAttribute("data-name", voices[i].name);
     voiceSelect.appendChild(option);
   } // for
-  console.log("popVlist selectedIndex:", selectedIndex);
 
   // voiceSelect is default index 0
   voiceSelect.selectedIndex = selectedIndex;
-  console.log("popVList VOICESELECT:", voiceSelect.selectedIndex);
 
   // NOTE: setInitial voice, must recall, when new voice selected.
   setVoiceOptions(voices, voiceSelect, utterThis);
