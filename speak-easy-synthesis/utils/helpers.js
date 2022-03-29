@@ -115,7 +115,7 @@ function newSentenceCheck(startingOffset, endingOffset, word, text) {
     startPosition = startingOffset;
     startPositions.push(startPosition);
 
-    /***********************
+    /************************
      * Highlight the first Sentence:
      ************************/
     console.log(
@@ -171,24 +171,6 @@ const setVoiceOptions = (voices, voiceSelect, utterThis) => {
   utterThis.pitch = pitch.value;
 }; // setVoiceOptions
 
-export const inputText = `11.1 The Competitive Labor Market
-
-The market for labor is of particular importance in the economy because it affects all of us. You
-are directly influenced by the labor market when you are looking for a job or are employed and
-earning money. In this chapter, instead of firms acting as suppliers, as we have viewed them so
-far, firms are the buyers (demanders) of labor. And individuals, like you, are the suppliers of
-labor.
-
-The market for labor, then, is composed of suppliers (workers) and demanders (firms). Workers
-produce goods and services and therefore are known as factors of production—a term we’ve met
-before in Chapter 6. Remember that a factor of production is used in the production of other
-goods.
-
-Markets for factors of production are somewhat different from markets for goods and services
-that we consume because the demand for factors of production is derived from the demand for
-final goods and services. A firm first makes the decision to produce a good or service and then
-decides which factors are necessary to produce that good or service. `;
-
 export const setSpeech = () => {
   return new Promise(function (resolve, reject) {
     let synth = window.speechSynthesis;
@@ -236,13 +218,20 @@ function onboundaryHandler(event, type) {
     let anchorPosition = getWordStart(value, index);
     let activePosition = anchorPosition + word.length;
 
-    if (type === "sentence")
-    {
+    if (type === "sentence") {
       // If new Sentence then set anchorPosition
     let endOfParagraph = newSentenceCheck(anchorPosition, activePosition, word, value);
     console.log("&&&&&&&EndofPage:", endOfParagraph);
     if (endOfParagraph) {
-      resetDefaults();    
+      // remove selection: does not work
+      word="";
+      anchorPosition=0;
+      activePosition=0;
+      window.getSelection().removeAllRanges(); 
+      textarea.setSelectionRange(0, 0);
+      textarea.setSelectionRange(anchorPosition, activePosition);
+      // textarea.focus();
+      resetDefaults();   
     }
   }
 
@@ -252,19 +241,17 @@ function onboundaryHandler(event, type) {
       textarea.setSelectionRange(anchorPosition, activePosition);
     } else {
       // OLD CONTENT
-      
-      let range = textarea.createTextRange();
-      range.collapse(true);
-      range.moveEnd("character", activePosition);
-      range.moveStart("character", anchorPosition);
-      range.select();
+      // console.log("########NO SETSELECTION RANGE")
+      // let range = textarea.createTextRange();
+      // range.collapse(true);
+      // range.moveEnd("character", activePosition);
+      // range.moveStart("character", anchorPosition);
+      // range.select();
     }
-  // } //if
 } //onBoundary
 
 // Get the word of a string given the string and index
 function getWordAt(str, pos) {
-  let isSameSentence = true;
   // Perform type conversions.
   str = String(str);
   pos = Number(pos) >>> 0;
@@ -342,8 +329,6 @@ https://vanillajstoolkit.com/polyfills/arrayforeach/
       enabledSettings = Array.from(checkboxes) // Convert checkboxes to an array to use filter and map.
         .filter((i) => i.checked) // Use Array.filter to remove unchecked checkboxes.
         .map((i) => i.value); // Use Array.map to extract only the checkbox values from the array of objects.
-
-      // console.log(enabledSettings);
     });
   });
 
@@ -366,7 +351,6 @@ https://vanillajstoolkit.com/polyfills/arrayforeach/
         break;
       case enabledSettings.includes("line"):
         utterThis.onboundary = (event) => onboundaryHandler(event, "line");
-        // synth.speak(utterThis);
         break;
       case enabledSettings.includes("word"):
         utterThis.onboundary = (event) => onboundaryHandler(event, "word");
@@ -396,7 +380,6 @@ https://vanillajstoolkit.com/polyfills/arrayforeach/
     if (speechSynthesis) {
       speechSynthesis.cancel();
     }
-    
     resetDefaults();
   };
 
@@ -406,8 +389,6 @@ https://vanillajstoolkit.com/polyfills/arrayforeach/
   };
 
   rate.onchange = function () {
-    // rateValue = document.querySelector(".rate-value");
-    // console.log("RateValue:", rate.value);
     utterThis.rate = rate.value;
     rateValue.textContent = rate.value;
   };

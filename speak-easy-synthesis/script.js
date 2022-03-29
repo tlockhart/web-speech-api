@@ -1,12 +1,11 @@
 import {
   activateListeners,
-  inputText,
   setSpeech,
   populateVoiceList,
 } from "./utils/helpers.js";
 
 // inputs:
-var inputForm = document.querySelector("form");
+// var inputForm = document.querySelector("form");
 let inputTxt = document.querySelector("#textarea");
 // const inputText
 // inputTxt.textContent = inputText;
