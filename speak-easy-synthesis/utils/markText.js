@@ -68,8 +68,12 @@ export const highlightSentence = (startIdx, endIdx) => {
   highlights.innerHTML = highlightedText;
 };
 
-// export const clearSelection = (textarea) => {
-//   let range = new Range();
-//   range.selectNodeContents(textarea); // or selectNode(p) to select the <p> tag too
-//   document.getSelection().removeAllRanges(); // clear existing selection if any
-// }
+export const clearWordSelection = (textarea) => {
+  setTimeout(() => {
+    console.log("Execute timeout");
+    window.getSelection().removeAllRanges();
+    textarea.setSelectionRange(0, 0);
+    textarea.setSelectionRange(0, 0);
+    speechSynthesis.cancel();
+  }, 1000);
+}

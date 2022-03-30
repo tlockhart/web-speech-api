@@ -1,4 +1,4 @@
-import { highlightSentence, removeSentenceHighlights } from "./markText.js";
+import { clearWordSelection, highlightSentence, removeSentenceHighlights } from "./markText.js";
 
 /*************************
  * Defaults:
@@ -48,7 +48,7 @@ const resetDefaults = () => {
 
   state = states.START;
   textarea = document.getElementById("textarea");
-  removeSentenceHighlights();
+  // clearWordSelection(textarea);
 };
 /***********************************************/
 
@@ -232,6 +232,14 @@ async function onboundaryHandler(event, type) {
   let anchorPosition = getWordStart(value, index);
   let activePosition = anchorPosition + word.length;
 
+  /*********************
+   * Word selection complete
+   **********************/
+  if(activePosition === value.length-1) {
+  console.log("@@@@currentPosition:", activePosition, "; lastPosition:", value.length);
+  clearWordSelection(textarea);
+  resetDefaults();
+}
   if (type === "sentence") {
     // If new Sentence then set anchorPosition
     let isEndOfParagraph = newSentenceCheck(
@@ -247,16 +255,8 @@ async function onboundaryHandler(event, type) {
        * Must be applied to word 
        * condition as well
        ***********************/
-
-      setTimeout(() => {
-        console.log("Execute timeout");
-        window.getSelection().removeAllRanges();
-        textarea.setSelectionRange(0, 0);
-        textarea.setSelectionRange(0, 0);
-        speechSynthesis.cancel();
+       removeSentenceHighlights();
         resetDefaults();
-      }, 1000);
-
       /***********************/
     }
   }
