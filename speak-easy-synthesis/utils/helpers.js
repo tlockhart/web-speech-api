@@ -1,8 +1,8 @@
-import { clearSelection, highlightSentence, removeSentenceHighlights } from "./markText.js";
+import { highlightSentence, removeSentenceHighlights } from "./markText.js";
 
 /*************************
  * Defaults:
-*************************/
+ *************************/
 // const DEFAULT_VOICE = 19; // for windows
 const DEFAULT_VOICE = 0; // for mac
 // sliders:
@@ -40,22 +40,24 @@ let state = states.START;
  * RESETDEFAULTS: Perform Page Reset without Refresh
  ***********************************************/
 const resetDefaults = () => {
-sentenceCt = 0;
-startPosition = 0;
+  sentenceCt = 0;
+  startPosition = 0;
 
-endPositions = [];
-startPositions = [];
+  endPositions = [];
+  startPositions = [];
 
-state = states.START;
-textarea = document.getElementById("textarea")
-removeSentenceHighlights();
-// remove word selection
-clearSelection(textarea);
-}
+  state = states.START;
+  textarea = document.getElementById("textarea");
+  removeSentenceHighlights();
+};
 /***********************************************/
 
 const isNewSentence = (startIdx, endIdxArray, sentenceCt) => {
-  if (state === states.START && (sentenceCt === 0 || (sentenceCt > 0 && startIdx > endIdxArray[sentenceCt -1]))) {
+  if (
+    state === states.START &&
+    (sentenceCt === 0 ||
+      (sentenceCt > 0 && startIdx > endIdxArray[sentenceCt - 1]))
+  ) {
     console.log("****ISNEWSENTENCE");
     return true;
   }
@@ -63,29 +65,34 @@ const isNewSentence = (startIdx, endIdxArray, sentenceCt) => {
 };
 
 const isEndOfSentence = (endIdx, endIdxArray, sentenceCt) => {
-  if (endIdxArray[sentenceCt - 1] === endIdx ) {
+  if (endIdxArray[sentenceCt - 1] === endIdx) {
     // console.log("****END OF SENTENCE")
     // console.log("sentenceCt:", sentenceCt, "; endIdxArray[sentenceCt - 1]:", endIdxArray[sentenceCt - 1], "; endIdx:", endIdx);
-   return true;
-  }
-  return false;
-}
-
-const isEndOfParagraph = (currentIdx, endIdx, endIdxArray, sentenceCt, text) => {
-  // console.log("PARAGRAPH:", "sentenceCt:", sentenceCt, "; currentIdx:", currentIdx, "; endIdxArray[sentenceCt - 1]:", endIdxArray[sentenceCt - 1], "; endIdx:", endIdx, "; LENGTH:", endIdxArray.length, "; state:", state);
-//  if(sentenceCt > 2){
-// console.log("-------SENTENCE:", text.substring(endIdxArray[sentenceCt-2], endIdxArray[sentenceCt-1]+1));
-//  console.log("endIdxArray[sentenceCt - 1] === endIdx:", endIdxArray[sentenceCt - 1] === endIdx);
-//  console.log("sentenceCt === endIdxArray.length-1:", sentenceCt === endIdxArray.length-1);
-//  }
- if(sentenceCt > 2 && endIdxArray[sentenceCt - 1] === endIdx && sentenceCt === endIdxArray.length-1 ) {
     return true;
   }
   return false;
-}
+};
+
+const isEndOfParagraph = (
+  currentIdx,
+  endIdx,
+  endIdxArray,
+  sentenceCt,
+  text
+) => {
+  
+  if (
+    sentenceCt > 2 &&
+    endIdxArray[sentenceCt - 1] === endIdx &&
+    sentenceCt === endIdxArray.length - 1
+  ) {
+    return true;
+  }
+  return false;
+};
 
 function getMatchIndices(regex, str) {
-  let  result = [];
+  let result = [];
   let match;
   regex = new RegExp(regex);
   while ((match = regex.exec(str)))
@@ -124,11 +131,10 @@ function newSentenceCheck(startingOffset, endingOffset, word, text) {
       }}`
     );
 
-      highlightSentence(
-        startPositions[sentenceCt - 1],
-        endPositions[sentenceCt - 1]
-      );
-  
+    highlightSentence(
+      startPositions[sentenceCt - 1],
+      endPositions[sentenceCt - 1]
+    );
 
     console.log("SENTENCE_COUNT:", sentenceCt);
     state = states.MIDDLE;
@@ -152,7 +158,15 @@ function newSentenceCheck(startingOffset, endingOffset, word, text) {
     startPosition = 0;
   }
 
-  if (isEndOfParagraph(startingOffset, endingOffset, endPositions, sentenceCt, text)) {
+  if (
+    isEndOfParagraph(
+      startingOffset,
+      endingOffset,
+      endPositions,
+      sentenceCt,
+      text
+    )
+  ) {
     return true;
   }
   return false;
@@ -196,7 +210,8 @@ const speak = (synth, utterThis) => {
 
   // End is fired when utterance is finished being spoken
   utterThis.onend = function (event) {
-    // console.log("SpeechSynthesisUtterance.onend", event);
+    console.log("SpeechSynthesisUtterance.onend", event);
+    resetDefaults();
   };
   // Error Event is fired when an err occurs that prevents the utterance from being spoken
   utterThis.onerror = function (event) {
@@ -204,50 +219,61 @@ const speak = (synth, utterThis) => {
   };
 }; // speak
 
-function onboundaryHandler(event, type) {
-
+async function onboundaryHandler(event, type) {
   // Get the entire text
-    let value = textarea.value;
+  let value = textarea.value;
 
-    // Get index of the first char that triggered the
-    // utterance event
-    let index = event.charIndex;
+  // Get index of the first char that triggered the
+  // utterance event
+  let index = event.charIndex;
 
-    // Get the entire word
-    let word = getWordAt(value, index);
-    let anchorPosition = getWordStart(value, index);
-    let activePosition = anchorPosition + word.length;
+  // Get the entire word
+  let word = getWordAt(value, index);
+  let anchorPosition = getWordStart(value, index);
+  let activePosition = anchorPosition + word.length;
 
-    if (type === "sentence") {
-      // If new Sentence then set anchorPosition
-    let endOfParagraph = newSentenceCheck(anchorPosition, activePosition, word, value);
-    console.log("&&&&&&&EndofPage:", endOfParagraph);
-    if (endOfParagraph) {
-      // remove selection: does not work
-      word="";
-      anchorPosition=0;
-      activePosition=0;
-      window.getSelection().removeAllRanges(); 
-      textarea.setSelectionRange(0, 0);
-      textarea.setSelectionRange(anchorPosition, activePosition);
-      // textarea.focus();
-      resetDefaults();   
+  if (type === "sentence") {
+    // If new Sentence then set anchorPosition
+    let isEndOfParagraph = newSentenceCheck(
+      anchorPosition,
+      activePosition,
+      word,
+      value
+    );
+    console.log("&&&&&&&EndofPage:", isEndOfParagraph);
+    if (isEndOfParagraph) {
+      /**********************
+       * Remove Selection: 
+       * Must be applied to word 
+       * condition as well
+       ***********************/
+
+      setTimeout(() => {
+        console.log("Execute timeout");
+        window.getSelection().removeAllRanges();
+        textarea.setSelectionRange(0, 0);
+        textarea.setSelectionRange(0, 0);
+        speechSynthesis.cancel();
+        resetDefaults();
+      }, 1000);
+
+      /***********************/
     }
   }
 
-    textarea.focus();
-    // if there is no current selected range
-    if (textarea.setSelectionRange) {
-      textarea.setSelectionRange(anchorPosition, activePosition);
-    } else {
-      // OLD CONTENT
-      // console.log("########NO SETSELECTION RANGE")
-      // let range = textarea.createTextRange();
-      // range.collapse(true);
-      // range.moveEnd("character", activePosition);
-      // range.moveStart("character", anchorPosition);
-      // range.select();
-    }
+  textarea.focus();
+  // if there is no current selected range
+  if (textarea.setSelectionRange) {
+    textarea.setSelectionRange(anchorPosition, activePosition);
+  } else {
+    // OLD CONTENT
+    // console.log("########NO SETSELECTION RANGE")
+    // let range = textarea.createTextRange();
+    // range.collapse(true);
+    // range.moveEnd("character", activePosition);
+    // range.moveStart("character", anchorPosition);
+    // range.select();
+  }
 } //onBoundary
 
 // Get the word of a string given the string and index
@@ -256,7 +282,6 @@ function getWordAt(str, pos) {
   str = String(str);
   pos = Number(pos) >>> 0;
 
-
   /***********************************************
    * match on a non-whitespace letter
    * Search for the word's beginning index. loop
@@ -264,7 +289,6 @@ function getWordAt(str, pos) {
    * and return the index of all non-whitespace char
    ***********************************************/
   let left = str.slice(0, pos + 1).search(/\S+$/);
-  // console.log("LEFT-INDEX:", left);
   /***********************************************
    * match on a whitespace letter
    * Search for the word's ending index. loop
@@ -274,7 +298,6 @@ function getWordAt(str, pos) {
    ***********************************************/
   let right = str.slice(pos).search(/\s/);
 
-  // console.log("RIGHT-INDEX:", right);
   // The last word in the string is a special case.
   if (right < 0) {
     return str.slice(left);
@@ -292,9 +315,7 @@ function getWordAt(str, pos) {
 // Get the position of the beginning of the word
 function getWordStart(str, pos) {
   str = String(str);
-  // console.log("Pos1:", pos);
   pos = Number(pos) >>> 0;
-  // console.log("Pos2:", pos);
 
   /***********************************************
    * From the whole text str, slice the first
@@ -315,8 +336,6 @@ export const activateListeners = (
   utterThis,
   inputTxt
 ) => {
-  
-
   /*
 For IE11 support, replace arrow functions with normal functions and
 use a polyfill for Array.forEach:
@@ -334,11 +353,11 @@ https://vanillajstoolkit.com/polyfills/arrayforeach/
 
   playBtn.onclick = (event) => {
     event.preventDefault();
-    
+
     resetDefaults();
     setVoiceOptions(voices, voiceSelect, utterThis);
     utterThis.text = inputTxt.value;
-    
+
     switch (true) {
       case enabledSettings.includes("sentence"):
         // console.log("In sentence case");

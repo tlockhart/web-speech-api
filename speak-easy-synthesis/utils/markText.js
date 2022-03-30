@@ -68,8 +68,8 @@ export const highlightSentence = (startIdx, endIdx) => {
   highlights.innerHTML = highlightedText;
 };
 
-export const clearSelection = (textarea) => {
-  let range = new Range();
-  range.selectNodeContents(textarea); // or selectNode(p) to select the <p> tag too
-  document.getSelection().removeAllRanges(); // clear existing selection if any
-}
+// export const clearSelection = (textarea) => {
+//   let range = new Range();
+//   range.selectNodeContents(textarea); // or selectNode(p) to select the <p> tag too
+//   document.getSelection().removeAllRanges(); // clear existing selection if any
+// }
